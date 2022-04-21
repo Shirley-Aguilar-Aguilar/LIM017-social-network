@@ -1,29 +1,71 @@
 // eslint-disable-next-line import/no-cycle
-// eslint-disable-next-line import/no-unresolved
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.9/firebase-auth.js';
-import {
-  doc, getDoc,
-// eslint-disable-next-line import/no-unresolved
-} from 'https://www.gstatic.com/firebasejs/9.6.9/firebase-firestore.js';
-// eslint-disable-next-line import/no-cycle
 import { headerTemplate } from './Header.js';
 // eslint-disable-next-line import/no-cycle
 import { publicationBeforeTemplate } from './PublicationBefore.js';
 import {
-  onGetPublicationUser, deletePublication, getOnlyPublication, updatePublication, db,
+  // eslint-disable-next-line max-len
+  onGetPublicationUser, deletePublication, getOnlyPublication, updatePublication, onGetUser, likePublication, lovePublication,
 } from '../cloudFirebase.js';
-// eslint-disable-next-line import/no-cycle
-import { onNavigate } from '../main.js';
-import { photoUser, coverPageUser } from '../storage.js';
+import { photoUser, coverPageUser, publicationUser } from '../storage.js';
 
 export const Profile = () => {
   const profileContainer = document.createElement('div');
   profileContainer.className = 'container-feed'; // contenedor general
+  const divChangeImageDisplay = document.createElement('div');
+  divChangeImageDisplay.style.display = 'none';
+  const divChangeImage = document.createElement('div');
+  divChangeImage.className = 'div-logo-change-image';
+  const logoChange = document.createElement('img');
+  logoChange.src = '../img/cargando.gif';
+  logoChange.alt = 'gif de cargando';
   const mainTemplate = document.createElement('main');
   mainTemplate.className = 'container-publication';
+  const coverPagePhotoContainer = document.createElement('div');
+  coverPagePhotoContainer.className = 'container-coverpage-Photo';
+  divChangeImageDisplay.appendChild(divChangeImage);
+  divChangeImage.appendChild(logoChange);
 
-  // mainTemplate.appendChild(publications());
+  // FOTO DE PORTADA Y FOTO DEL USUARIO EN GRANDE
+  onGetUser((querySnapshot) => {
+    let html = '';
+    querySnapshot.forEach((doc2) => {
+      const profileNew = doc2.data(); // dato de todos los usuarios
+      if (profileNew.id === sessionStorage.getItem('uid')) {
+        html += `
+        <div class="container-coverPage-profilePhoto" id="coverProfileContainer"  style="background-image: url('${profileNew.urlCoverPage}');">
+        <div class="photo-profile" style="background-image: url('${profileNew.urlPhotoUser}');">
+          <div class="div-uploader-photo">
+           <input type="file" id="imgUploaderphoto">
+          </div>
+        </div>
+        <div class="name-usuario">
+            <label class="name-label" id="nameLabel"> Bienvenid@ ${profileNew.name}</label>
+        </div>
+        <div class="div-uploader-cover-page">
+             <input type="file" id="imgUploaderPortada">
+        </div>
+        </div>
+      `;
+      }
+    });
+    coverPagePhotoContainer.innerHTML = html;
 
+    const imageUploaderPhoto = coverPagePhotoContainer.querySelector('#imgUploaderphoto');
+    const imageUploaderCover = coverPagePhotoContainer.querySelector('#imgUploaderPortada');
+
+    // AÑADIENDO FUNCIONALIDAD PARA PONER LA FOTO DEL USUARIO EN EL PROFILE
+    imageUploaderPhoto.addEventListener('change', (e) => {
+      const file = e.target.files[0]; // url de la foto
+      divChangeImageDisplay.style.display = 'block';
+      photoUser(file, divChangeImageDisplay.style);
+    });
+    imageUploaderCover.addEventListener('change', (e) => {
+      const file = e.target.files[0]; // url de la foto
+      divChangeImageDisplay.style.display = 'block';
+      coverPageUser(file, divChangeImageDisplay.style);
+    });
+  });
+  // PUBLICACIONES SOLO DEL USUARIO
   onGetPublicationUser((querySnapshot) => {
     let html = '';
     querySnapshot.forEach((doc2) => {
@@ -31,51 +73,96 @@ export const Profile = () => {
       if (publicationNew.uid === sessionStorage.getItem('uid')) {
         html += `
         <section class= 'container-publication-final' >
+            <div style='display:none;' class = 'message-alert-content div-alert-message-color'>
+                <p>¿Estas seguro de eliminar esta publicación?</p>
+                <button  class ='button-yes button-alert' data-id='${doc2.id}' >SI</button>
+                <button class= 'button-no button-alert'>NO</button>
+            </div>
           <div class = 'container-user-edit direction' >
              <figure class = figure-name-photo direction' >
-                 <img class= 'photo-user-pub' id = 'photoUser' src='' alt='foto de perfil'>
-                 <figcaption class ='user-name-pub' ></figcaption>
+                 <img class= 'photo-user-pub' id = 'photoUser' src='${sessionStorage.getItem('photoUser')}' alt='foto de perfil'>
+                 <figcaption class ='user-name-pub' >${sessionStorage.getItem('nameUser')}</figcaption>
                  <img class= 'share-edit-logo' data-id='${doc2.id}' src='img/icomon/pencil.jpg' alt='logo para editar'>
                  <img class= 'share-trash-logo' data-id='${doc2.id}' src='img/icomon/bin.jpg' alt='logo para eliminar publicación'>
              </figure>
           </div>
-          <div  contentEditable ='false' class= 'title-area'  id= 'newTitle' >${publicationNew.title}</div>
+          <div  contentEditable ='false' class= 'title-area '  id= 'newTitle' >${publicationNew.title}</div>
           <div  contentEditable ='false'   class= 'text-area div-text' id= 'newText'>${publicationNew.text}</div>
-          <div class = 'direction' >
+         <div class = 'direction' >
              <img  style='display:none;' class='share-stickers-logo like-love-smile' src='img/icomon/smile.jpg' alt='logo para agregar stickers a la publicación'>
-             <img class= 'like-love-smile ' src='img/icomon/like.jpg' alt='logo para dar me encanta'>
-             <img class= 'like-love-smile' src='img/icomon/heart.jpg' alt='logo para dar love'>
+             <img class= 'like-love-smile btnlike' data-id='${doc2.id}' src= ${!publicationNew.like ? 'img/icomon/like.jpg' : publicationNew.like.find((e) => e === sessionStorage.getItem('uid')) ? 'img/icomon/likeO.jpg' : 'img/icomon/like.jpg'} alt='logo para dar me encanta'><figcaption class ='count-like-love' >${publicationNew.like ? publicationNew.like.length : 0}</figcaption>
+             <img class= 'like-love-smile btnlove' data-id='${doc2.id}' src= ${!publicationNew.love ? 'img/icomon/heart.jpg' : publicationNew.love.find((e) => e === sessionStorage.getItem('uid')) ? 'img/icomon/heartO.jpg' : 'img/icomon/heart.jpg'} alt='logo para dar love'><figcaption class ='count-like-love' >${publicationNew.love ? publicationNew.love.length : 0}</figcaption>
              <button style='display:none;'  class = 'btn-save'>Guardar cambios</button>
              <div class='div-emoticons' id='divEmoticon'; style='display: none;'></div>
           </div>
           
         </section>
        `;
-      } else {
-        html += `
-        <section class= 'container-publication-final' >
-          <div class = 'container-user-edit direction' >
-             <figure class = figure-name-photo direction' >
-                 <img class= 'photo-user-pub' id= 'photoUser' src='img/icomon/user.jpg' alt='foto de perfil'>
-                 <figcaption class ='user-name-pub' >Username</figcaption>
-             </figure>
-          </div>
-          <div  contentEditable ='false' id= 'newTitle'>${publicationNew.title}</div>
-          <div  contentEditable ='false'  class= 'p-text-publication' id= 'newText' >${publicationNew.text}</div>
-          <div class = 'direction' >
-             <img class= 'like-love-smile' src='img/icomon/like.jpg' alt='logo para dar me encanta'>
-             <img class= 'like-love-smile' src='img/icomon/heart.jpg' alt='logo para dar love'>
-          </div>
-        </section>
-      `;
       }
     });
     mainTemplate.innerHTML = html;
+    // AGREGANDO FUNCIONALIDAD DE IMAGENES
+    const buttonShareImage = mainTemplate.querySelectorAll('.share-image-logo');
+    buttonShareImage.forEach((btnImage) => {
+      const sectionPublication = btnImage.parentNode.parentNode;
+      const divUploader = sectionPublication.querySelector('.div-uploader');
+      const inputUploader = sectionPublication.querySelector('.img-uploader');
+      const divEmoticon = sectionPublication.querySelector('.div-emoticons');
+      const areaText = sectionPublication.querySelector('.text-area');
+      const divChangeLogoDisplay = sectionPublication.querySelector('.div-display-change');
+      const buttonShare = sectionPublication.querySelector('.share-image-logo');
+      buttonShare.addEventListener('click', () => {
+        if (divUploader.style.display === 'none') {
+          divUploader.style.display = 'flex';
+          divEmoticon.style.display = 'none';
+        } else {
+          divUploader.style.display = 'none';
+        }
+      });
+      inputUploader.addEventListener('change', (e) => {
+        const divPreview = document.createElement('div');
+        divPreview.className = 'div-preview';
+        const imagePreview = document.createElement('img');
+        imagePreview.id = 'imgPreview';
+        divPreview.appendChild(imagePreview);
+        areaText.appendChild(divPreview);
+
+        const file = e.target.files[0]; // url de la foto
+        divChangeLogoDisplay.style.display = 'block';
+        publicationUser(file, imagePreview, divChangeLogoDisplay.style);
+      });
+    });
+    // LIKE A PUBLICACIONES
+    const buttonLike = mainTemplate.querySelectorAll('.btnlike');
+    buttonLike.forEach((btn) => {
+      btn.addEventListener('click', ({ target: { dataset } }) => {
+        likePublication(dataset.id);
+      });
+    });
+    // LOVE A PUBLICACIONES
+    const buttonLove = mainTemplate.querySelectorAll('.btnlove');
+    buttonLove.forEach((btn) => {
+      btn.addEventListener('click', ({ target: { dataset } }) => {
+        lovePublication(dataset.id);
+      });
+    });
     // eliminando publicaciones
     const buttonDelete = mainTemplate.querySelectorAll('.share-trash-logo');
     buttonDelete.forEach((btn) => {
-      btn.addEventListener('click', ({ target: { dataset } }) => {
-        deletePublication(dataset.id);
+      const sectionPublication = btn.parentNode.parentNode.parentNode;
+      const buttonDeleteOnly = sectionPublication.querySelector('.share-trash-logo');
+      const messageAlert = sectionPublication.querySelector('.div-alert-message-color');
+      const messageAlertYes = sectionPublication.querySelector('.button-yes');
+      const messageAlertNo = sectionPublication.querySelector('.button-no');
+      buttonDeleteOnly.addEventListener('click', () => {
+        messageAlert.style.display = 'block';
+        messageAlertYes.addEventListener('click', ({ target: { dataset } }) => {
+          deletePublication(dataset.id);
+          messageAlert.style.display = 'none';
+        });
+        messageAlertNo.addEventListener('click', () => {
+          messageAlert.style.display = 'none';
+        });
       });
     });
     // EDITANDO PUBLICACIONES
@@ -85,7 +172,7 @@ export const Profile = () => {
         const doc3 = await getOnlyPublication(e.target.dataset.id); // trae publicaciones por id
         const id = e.target.dataset.id;
         const sectionPublication = btn2.parentNode.parentNode.parentNode;
-        // activamos el text area y el div para editar
+        // obtenemos los contenedores
         const areaTitle = sectionPublication.querySelector('.title-area');
         const areaText = sectionPublication.querySelector('.text-area');
         // activando contenedores
@@ -119,12 +206,13 @@ export const Profile = () => {
           }
         });
         buttonSave.style.display = 'block';
+        // ACTUALIZANDO PUBLICACIONES
         buttonSave.addEventListener('click', () => {
           let titleNew = doc3.data().title;
           titleNew = sectionPublication.querySelector('#newTitle').innerHTML;
           let textNew = doc3.data().text;
           textNew = sectionPublication.querySelector('#newText').innerHTML;
-          updatePublication(id, { // actualizando publicaciones
+          updatePublication(id, {
             title: titleNew,
             text: textNew,
           });
@@ -136,181 +224,12 @@ export const Profile = () => {
         });
       });
     });
-    buttonEdit.forEach((btn) => {
-      const sectionPublication = btn.parentNode.parentNode;
-      // obtener nombre y foto de firebase o de google de cada usuario
-      function loginGoogleName() {
-        const userNameGoogle = sessionStorage.getItem('name');
-        if (userNameGoogle != null) {
-          sectionPublication.querySelector('.user-name-pub').innerText = sessionStorage.getItem('name');
-        } else {
-          sectionPublication.querySelector('.user-name-pub').innerText = 'username';
-        }
-      }
-      function loginGooglePhoto() {
-        const photoNameGoogle = sessionStorage.getItem('photo');
-        if (photoNameGoogle != null) {
-          sectionPublication.querySelector('.photo-user-pub').src = sessionStorage.getItem('photo');
-        } else {
-          sectionPublication.querySelector('.photo-user-pub').src = 'img/icomon/user.jpg';
-        }
-      }
-
-      async function obtenerUsuarioId2(id) {
-        let user = null;
-        const docRef = doc(db, 'dataUsers', id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          user = docSnap.data();
-          if (user.name != null) {
-            sectionPublication.querySelector('.user-name-pub').innerText = user.name;
-          } else {
-            sectionPublication.querySelector('.user-name-pub').innerText = 'username';
-          }
-        } else { // doc.data() will be undefined in this case
-          loginGoogleName();
-          console.log('No such document in firebase!');
-        }
-
-        if (docSnap.exists()) {
-          console.log(docSnap);
-          user = docSnap.data();
-          if (user.photo != null) {
-            console.log(user.photo);
-          } else {
-            sectionPublication.querySelector('.photo-user-pub').src = 'img/icomon/user.jpg';
-          }
-        } else { // doc.data() will be undefined in this case
-          loginGooglePhoto();
-          console.log('No such document in firebase!');
-        }
-      }
-
-      // ver autentificacion si la sesion  esta activa o inactiva //inicia y cerrar sesion
-      function listeningSessionEvent2() {
-        const auth = getAuth();
-        // eslint-disable-next-line no-shadow
-        onAuthStateChanged(auth, (user) => {
-          if (user === null) { // User is signed in, see docs for a list of available properties
-          // https://firebase.google.com/docs/reference/js/firebase.User
-            onNavigate('/');
-          } else {
-            const uid = user.uid;
-            obtenerUsuarioId2(uid);
-          }
-        });
-      }
-      listeningSessionEvent2();
-    });
   });
-
-  // FOTO DE PORTADA Y FOTO DEL USUARIO EN GRANDE
-  const nameUsuario = document.createElement('div');
-  nameUsuario.className = 'name-usuario';
-  const labelNameUsuario = document.createElement('label');
-  labelNameUsuario.className = 'name-label';
-  labelNameUsuario.id = 'nameLabel';
-
-  const coverPageProfilePhotoContainer = document.createElement('div');
-  coverPageProfilePhotoContainer.className = 'container-coverPage-profilePhoto';
-  coverPageProfilePhotoContainer.id = 'coverProfileContainer';
-  const divProfilePhoto = document.createElement('div');
-  divProfilePhoto.className = 'photo-profile';
-  // divProfilePhoto.style.backgroundImage = `url('${sessionStorage.getItem('photoUser')}')`;
-  // div e input para subir foto de usuario
-  const coverPagePhoto = document.createElement('div');
-  coverPagePhoto.className = 'div-uploader-photo';
-  const imageUploaderPhoto = document.createElement('input');
-  imageUploaderPhoto.type = 'file';
-  imageUploaderPhoto.id = 'imgUploaderphoto';
-  // div e input para subir foto de portada
-  const coverPage = document.createElement('div');
-  coverPage.className = 'div-uploader-cover-page';
-  const imageUploaderCover = document.createElement('input');
-  imageUploaderCover.type = 'file';
-  imageUploaderCover.id = 'imgUploaderPortada';
-
-  coverPage.appendChild(imageUploaderCover);
-  coverPagePhoto.appendChild(imageUploaderPhoto);
-  divProfilePhoto.appendChild(coverPagePhoto);
-  coverPageProfilePhotoContainer.appendChild(divProfilePhoto);
-  coverPageProfilePhotoContainer.appendChild(nameUsuario);
-  coverPageProfilePhotoContainer.appendChild(coverPage);
-  nameUsuario.appendChild(labelNameUsuario);
-
+  profileContainer.appendChild(divChangeImageDisplay);
   profileContainer.appendChild(headerTemplate());
-  profileContainer.appendChild(coverPageProfilePhotoContainer);
+  profileContainer.appendChild(coverPagePhotoContainer);
   profileContainer.appendChild(publicationBeforeTemplate());
   profileContainer.appendChild(mainTemplate);
-  // profileContainer.appendChild(nameUsuario);
-  // nameUsuario.appendChild(labelNameUsuario);
-
-  // funcion para colocar nombre cuando ingreses con google
-  function loginGoogle() {
-    const userNameGoogle = sessionStorage.getItem('name');
-    if (userNameGoogle != null) {
-      labelNameUsuario.innerText = `BIENVENIDO  ${userNameGoogle}`;
-    }
-  }
-  async function obtenerUsuarioId(id) {
-    let user = null;
-    const docRef = doc(db, 'dataUsers', id);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      user = docSnap.data();
-      console.log(user);
-
-      if (user.name != null) {
-        console.log(user.name);
-        labelNameUsuario.innerText = `BIENVENIDO  ${user.name}`;
-      } else {
-        labelNameUsuario.innerText = `BIENVENIDO ${user.email}`;
-      }
-    } else {
-      // doc.data() will be undefined in this case
-      loginGoogle();
-      console.log('No such document!');
-    }
-
-    if (sessionStorage.getItem('photoUser') != null) {
-      console.log(sessionStorage.getItem('photoUser'));
-      divProfilePhoto.style.backgroundImage = `url('${sessionStorage.getItem('photoUser')}'`;
-    } else {
-      divProfilePhoto.style.backgroundImage = 'url(../img/un-usuario.jpg)';
-    }
-  }
-
-  // ver autentificacion si la sesion  esta activa o inactiva //inicia y cerrar sesion
-  function listeningSessionEvent() {
-    const auth = getAuth();
-    onAuthStateChanged(auth, (user) => {
-      if (user === null) {
-        // User is signed in, see docs for a list of available properties
-        // https://firebase.google.com/docs/reference/js/firebase.User
-        onNavigate('/');
-      } else {
-        const uid = user.uid;
-        obtenerUsuarioId(uid);
-        console.log(uid);
-      }
-    });
-  }
-
-  listeningSessionEvent();
-
-  // AÑADIENDO FUNCIONALIDAD PARA PONER LA FOTO DEL USUARIO EN EL PROFILE
-  imageUploaderPhoto.addEventListener('change', (e) => {
-    const file = e.target.files[0]; // url de la foto
-    console.log(file);
-    photoUser(file, divProfilePhoto);
-    console.log(file.name);
-  });
-  imageUploaderCover.addEventListener('change', (e) => {
-    const file = e.target.files[0]; // url de la foto
-    console.log(file);
-    coverPageUser(file, coverPageProfilePhotoContainer);
-  });
 
   return profileContainer;
 };

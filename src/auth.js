@@ -3,24 +3,24 @@ import {
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, signOut,
   // eslint-disable-next-line no-unused-vars
   updatePassword, onAuthStateChanged, sendPasswordResetEmail,
-  // eslint-disable-next-line import/no-unresolved
-} from 'https://www.gstatic.com/firebasejs/9.6.9/firebase-auth.js';
-// eslint-disable-next-line import/no-cycle,import/no-unresolved
-import { onNavigate } from './main.js';
-import { dataUser } from './cloudFirebase.js';
-// eslint-disable-next-line import/no-cycle
 // eslint-disable-next-line import/no-unresolved
+} from 'https://www.gstatic.com/firebasejs/9.6.9/firebase-auth.js';
+// eslint-disable-next-line import/no-cycle
+import { onNavigate } from './main.js';
+import { dataUser, getUser } from './cloudFirebase.js';
 
-// función para crear nuevos usuarios
+// FUNCIÓN PARA CREAR NUEVOS USUARIOS
 export async function register(name, email, password) {
   const auth = getAuth();
   let result = '';
   await createUserWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
-      // Signed in
-      const idUser = userCredential.user.uid;
+      const idUser = userCredential.user.uid; // id de usuario
       result = true;
-      dataUser(idUser, name, email, password);
+      // imagenes predeterminadas
+      const urlPhotoUser = 'https://firebasestorage.googleapis.com/v0/b/social-network-programmers.appspot.com/o/user.jpg?alt=media&token=231ef8f9-fbee-4755-b3db-7cd80cbd3cf9';
+      const urlCoverPage = 'https://firebasestorage.googleapis.com/v0/b/social-network-programmers.appspot.com/o/cover-default.jpg?alt=media&token=5a5ea188-4df6-41e6-8279-37f40e57711b';
+      dataUser(idUser, name, email, password, urlPhotoUser, urlCoverPage);
     })
     .catch((error) => {
       const errorCode = error.code;
@@ -42,65 +42,72 @@ export async function register(name, email, password) {
   return result;
 }
 
-// funcion para acceso a usuarios existentes
+// FUNCIÓN PARA ACCESO A USUARIOS EXISTENTES
 export function accesUser(email, password) {
   const auth = getAuth();
   signInWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
+    .then(async (userCredential) => {
       // Signed in
       const usuario = userCredential.user.uid;
-      sessionStorage.setItem('uid', usuario);
-      // sessionStorage.setItem('name', nameUsuarie);
-      sessionStorage.setItem('email',email);
-      console.log(email);
+      const docSnap = await getUser(usuario);
+      const urlPhotoUser = docSnap.data().urlPhotoUser;
+      const nameUser = docSnap.data().name;
+      const id = docSnap.data().id;
+      sessionStorage.setItem('uid', id);
+      sessionStorage.setItem('email', email);
+      sessionStorage.setItem('nameUser', nameUser);
+      sessionStorage.setItem('photoUser', urlPhotoUser);
 
-      if (userCredential.user.photoURL != null) {
-        sessionStorage.setItem('photo', userCredential.user.photoURL);
-      } else {
-        sessionStorage.setItem('photo', 'img/un-usuario.jpg');
-      }
       onNavigate('/feed');
-
-      // //img
     })
     .catch((error) => {
       console.log(error.message);
       document.getElementById('messageHide').style.display = 'block';
     });
 }
-// autenticación con Google
+// AUTENTICACIÓN CON GOOGLE
 const provider = new GoogleAuthProvider();
 
-export function accesGoogle() {
-  const auth = getAuth();
-  signInWithPopup(auth, provider)
-    .then((result) => {
+export async function accesGoogle() {
+  const auth1 = getAuth();
+  signInWithPopup(auth1, provider)
+    .then(async (result) => {
       // This gives you a Google Access Token. You can use it to access the Google API.
       const credential = GoogleAuthProvider.credentialFromResult(result);
       const token = credential.accessToken;
-      console.log(token);
       // The signed-in user info.
       const user = result.user;
-      sessionStorage.setItem('uid', user.uid);
-      sessionStorage.setItem('name', user.displayName);
-      console.log(user.displayName);
-      console.log(user.photoURL);
+      const nameUser = user.displayName;
+      const idUser = user.uid;
+      const emailUser = user.email;
 
-      if (user.photoURL != null) {
-        sessionStorage.setItem('photo', user.photoURL);
-      } else {
-        sessionStorage.setItem('photo', 'img/un-usuario.jpg');
+      let urlPhotoUser = null;
+      let urlCoverPage = null;
+      const docSnap = await getUser(idUser);
+      if (docSnap.exists()) {
+        urlPhotoUser = docSnap.data().urlPhotoUser;
+        urlCoverPage = docSnap.data().urlCoverPage;
+        sessionStorage.setItem('uid', user.uid);
+        sessionStorage.setItem('photoUser', urlPhotoUser);
+        sessionStorage.setItem('nameUser', nameUser);
+        dataUser(idUser, nameUser, emailUser, token, urlPhotoUser, urlCoverPage);
+      } else { // doc.data() will be undefined in this case
+        // imagenes predeterminadas ¿'opcion de poner foto de google?
+        urlPhotoUser = user.photoURL;
+        sessionStorage.setItem('uid', user.uid);
+        sessionStorage.setItem('nameUser', nameUser);
+        sessionStorage.setItem('photoUser', urlPhotoUser);
+        urlCoverPage = 'https://firebasestorage.googleapis.com/v0/b/social-network-programmers.appspot.com/o/cover-default.jpg?alt=media&token=5a5ea188-4df6-41e6-8279-37f40e57711b';
+        dataUser(idUser, nameUser, emailUser, token, urlPhotoUser, urlCoverPage);
       }
-
       onNavigate('/feed');
-      // document.getElementById('imagenUsuario').src = photoUrl;
     }).catch((error) => {
       const credential = GoogleAuthProvider.credentialFromError(error);
       console.error(credential, error);
     });
 }
 
-// autenticación con FB
+// AUTENTICACIÓN CON FB
 const provider2 = new FacebookAuthProvider();
 
 export function accesFacebook() {
@@ -121,8 +128,7 @@ export function accesFacebook() {
     });
 }
 
-// reestablecer contraseña
-
+// REESTABLECER CONTRASEÑA
 export function restorePassword() {
   const auth = getAuth();
   const email = document.getElementById('txtCorreo').value;
@@ -134,20 +140,20 @@ export function restorePassword() {
     })
     .catch((error) => {
       const errorCode = error.code;
+      console.log(errorCode);
       const errorMessage = error.message;
-
-      // ..
+      console.log(errorMessage);
     });
 }
 
-// cerrar sesion
-
+// FUNCIÓN PARA CERRAR SESIÓN
 export function cerrarSesion() {
   const auth = getAuth();
   signOut(auth)
     // eslint-disable-next-line no-unused-vars
     .then((userCredencial) => {
       // Password reset email sent!
+      sessionStorage.clear();
       onNavigate('/');
     })
     .catch((error) => {
@@ -168,12 +174,10 @@ export function configurationPassword() {
   const newPasswordConfirm = document.getElementById('txtPasswordNewRepeat').value;
   const email = sessionStorage.getItem('email');
   if (newPassword !== newPasswordConfirm) {
-    //
     console.log('las contraseñas no coinciden');
     return;
   }
   if (!validatePassword(newPassword)) {
-    //
     console.log('la contraseña no es válida');
     return;
   }
@@ -189,7 +193,6 @@ export function configurationPassword() {
             onNavigate('/');
           }).catch((error) => {
             // An error ocurred
-            // ...
             console.log(error.message);
           });
         } else {
@@ -202,4 +205,16 @@ export function configurationPassword() {
       console.log(error.message);
       document.getElementById('messageHide').style.display = 'block';
     });
+}
+
+// VERIFICAR SI SESIÓN ESTA ACTIVA O NO => CERRAR SI ESTA INACTIVA
+export function listeningSessionEvent() {
+  const auth = getAuth();
+  // eslint-disable-next-line no-shadow
+  onAuthStateChanged(auth, (user) => {
+    if (user === null) { // User is signed in, see docs for a list of available properties
+    // https://firebase.google.com/docs/reference/js/firebase.User
+      onNavigate('/');
+    }
+  });
 }

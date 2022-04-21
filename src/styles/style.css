@@ -13,9 +13,10 @@
      background-color: #fff;
      height: 100vh;
      width: 100vw;
+     overflow: scroll;
  }
  .full-page{
-     background: url(img/diseno-fondo.webp) no-repeat center center;
+     background: url(../img/diseno-fondo.webp) no-repeat center center;
      background-size: cover;
      display: block;
      position: absolute;  /*saca del flujo el elemento , mantiene el lugar especificado*/
@@ -45,7 +46,7 @@
  }
 
  .card-header { /*contenedor del logo*/
-     padding: 15px 20px;
+     /*padding: 15px 20px;*/
      box-shadow: 0 10px 30px -12px rgb(0 0 0 / 42%), 0 4px 25px 0px rgb(0 0 0 / 12%), 0 8px 10px -5px rgb(0 0 0 / 20%);
      margin: -20px 15px 0;
      border-radius: 3px;
@@ -87,29 +88,29 @@
       display: table-cell;
   }
   .ico-user {
-      content: url(img/usuario.png);
+      content: url(../img/usuario.png);
   }
   .ico-eye {
-      content: url(img/ver.png);
+      content: url(../img/ver.png);
       margin: 7px 5px 0px 0px;
   }
   .ico-eye-hide {
-      content: url(img/invisible.png);
+      content: url(../img/invisible.png);
       margin: 7px 5px 0px 0px;
   }
   .ico-lock {
-      content: url(img/password.png);
+      content: url(../img/password.png);
   }
   .ico-correct {
-    content: url(img/correct.png);
+    content: url(../img/correct.png);
     margin-top: -15%;
   }
   .ico-incorrect {
-    content: url(img/incorrect.png);
+    content: url(../img/incorrect.png);
     margin-top: -15%;
   }
   .ico-danger {
-    content: url(img/alert.png);
+    content: url(../img/alert.png);
     margin-top: -15%;
   }
   .control-label {
@@ -163,7 +164,7 @@
   }
   /* STYLE CREATE USER(REGISTER.JS) */
   #pageCreate{
-      background: url(img/diseno-fondo.webp) no-repeat center center;
+      background: url(../img/diseno-fondo.webp) no-repeat center center;
       min-height: 100%;
       min-width: 100%;
       padding:15px 10px;
@@ -173,7 +174,7 @@
       flex-direction: column;
       justify-content: center;
       align-items:center ;
-      color: rgba(0,0,0, 0.87);;
+      color: rgba(0,0,0, 0.87);
      font-size:medium;
      font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
   }
@@ -358,12 +359,12 @@
     justify-content: center;
 }
 .icon-google {
-    content: url(img/icono-google.png);
+    content: url(../img/icono-google.png);
     height: 35px;
     margin: 10px;
 }
 .icon-fb {
-    content: url(img/icono-fb2.png);
+    content: url(../img/icono-fb2.png);
     height: 35px;
     margin: 10px;
 }
@@ -409,15 +410,15 @@
 }
 
 /* MURO*/
-body {
+/*body {
     overflow: scroll;
-}
+}*/
 body::-webkit-scrollbar{
     display: none;
    }
 /*HEADER STYLE MOBILE FIRST */
 .container-feed { /*contenedor general feed-profile*/
-    background: url(img/diseno-fondo.webp) no-repeat center center;
+    background: url(../img/diseno-fondo.webp) no-repeat center center;
     min-height: 100vh;
     min-width: 100vw;
     background-size: cover;
@@ -595,10 +596,10 @@ body::-webkit-scrollbar{
     .logo-computer{
         height: 70px;
     }
-    .input-search{
-        width:90%;
-        padding-right: 90px;
-    }
+    /*.input-search{*/
+    /*    width:90%;*/
+    /*    padding-right: 90px;*/
+    /*}*/
     .search-logo{
         height: 45px;
     }
@@ -640,16 +641,6 @@ body::-webkit-scrollbar{
         margin: 380px 0% auto 0%;
         font-size:larger;
     }
-}
-
-.container-profile {
-    background: url(img/diseno-fondo.webp) no-repeat center center;
-    min-height: 100%;
-    min-width: 100%;
-    background-size: cover;
-    position: absolute;
-    font-family: Verdana;
-    font-size: small;
 }
 
 #divSecurityPassword {

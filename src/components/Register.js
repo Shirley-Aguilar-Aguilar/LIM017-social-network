@@ -155,7 +155,6 @@ export const Register = () => {
   inputEmail.addEventListener('keyup', validy);
 
   // validado contraseña
-  // const regexPassword = /(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[-+_!@#$%^&*.,?]).+$/;
   const regexMinus = /(?=.*[a-z]).+$/;
   const regexMayus = /(?=.*[A-Z]).+$/;
   const regexNumber = /(?=.*[0-9]).+$/;
@@ -166,11 +165,6 @@ export const Register = () => {
       descSecurityCant.innerHTML = 'Min(6): <img src=\'img/check.png\'></img>';
       divPasswordHide.style.display = 'none';
       count += 1;
-      // if (regexPassword.test(inputPassword.value)) {
-      //   divPasswordHide.style.display = 'none';
-      // } else {
-      //   divPasswordHide.style.display = 'none';
-      // }
     } else {
       descSecurityCant.innerHTML = 'Min(6): <img src=\'img/false.png\'></img>';
       divPasswordHide.style.display = 'block';
@@ -214,7 +208,6 @@ export const Register = () => {
         divLevelSecurity.className = 'input-form div-level-low';
         break;
     }
-
   });
 
   divHeader.appendChild(imgLogo);
@@ -271,7 +264,6 @@ export const Register = () => {
   sectionRegister.appendChild(divContent);
 
   // funciones para registrar y validar
-
   async function resultRegister() {
     // eslint-disable-next-line max-len
     const resp = await register(inputName.value, inputEmail.value, inputPassword.value);

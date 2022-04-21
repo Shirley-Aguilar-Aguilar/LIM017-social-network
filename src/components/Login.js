@@ -95,7 +95,7 @@ export const Login = () => {
   linkLogin.className = 'link-login';
   // linkLogin.href = '#';
   linkLogin.innerText = '¿Olvidaste tu contraseña?';
-  linkLogin.addEventListener('click',() => onNavigate('/resetPassword'));
+  linkLogin.addEventListener('click', () => onNavigate('/resetPassword'));
 
   divCardHeader.appendChild(imgLogo);
 

@@ -1,13 +1,8 @@
-// eslint-disable-next-line import/no-unresolved
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.9/firebase-auth.js';
-// eslint-disable-next-line import/order,import/no-unresolved
-import { doc, getDoc, getFirestore } from 'https://www.gstatic.com/firebasejs/9.6.9/firebase-firestore.js';
 // eslint-disable-next-line import/no-cycle
 import { onNavigate } from '../main.js';
 // eslint-disable-next-line import/no-cycle
-import { cerrarSesion } from '../auth.js';
+import { cerrarSesion, listeningSessionEvent } from '../auth.js';
 
-export const db = getFirestore();
 export const headerTemplate = () => {
   const headerdiv = document.createElement('header');
   // CONTENEDOR DIV( FOTO,NAME,SEARCH)
@@ -19,6 +14,7 @@ export const headerTemplate = () => {
   const aPhoto = document.createElement('a');
   const imgUser = document.createElement('img');
   imgUser.className = 'photo-user';
+  imgUser.src = sessionStorage.getItem('photoUser');
   imgUser.id = 'imagenUsuario';
   imgUser.alt = 'foto de perfil';
   const attr = document.createAttribute('referrerpolicy');
@@ -26,6 +22,7 @@ export const headerTemplate = () => {
   imgUser.setAttributeNode(attr);
   const figcaptionName = document.createElement('figcaption');
   figcaptionName.className = 'figcaption-name';
+  figcaptionName.innerText = sessionStorage.getItem('nameUser');
 
   // contenedor del buscador
   const containerSearch = document.createElement('div');
@@ -132,67 +129,7 @@ export const headerTemplate = () => {
       containerNavHide.style.display = 'none';
     }
   });
-  // obtener nombre y foto de firebase o de google
-  function loginGoogleName() {
-    const userNameGoogle = sessionStorage.getItem('name');
-    if (userNameGoogle != null) {
-      figcaptionName.innerText = sessionStorage.getItem('name');
-    } else {
-      figcaptionName.innerText = 'username';
-    }
-  }
-  function loginGooglePhoto() {
-    const photoNameGoogle = sessionStorage.getItem('photo');
-    if (photoNameGoogle != null) {
-      imgUser.src = sessionStorage.getItem('photo');
-    } else {
-      imgUser.src = 'img/icomon/user.jpg';
-    }
-  }
 
-  async function obtenerUsuarioId(id) {
-    let user = null;
-    const docRef = doc(db, 'dataUsers', id);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      user = docSnap.data();
-      if (user.name != null) {
-        figcaptionName.innerText = user.name;
-      } else {
-        figcaptionName.innerText = 'username';
-      }
-    } else { // doc.data() will be undefined in this case
-      loginGoogleName();
-      console.log('No such document in Google!');
-    }
-
-    if (docSnap.exists()) {
-      user = docSnap.data();
-      if (user.photo != null) {
-        console.log(user.photo);
-      } else {
-        imgUser.src = 'img/icomon/user.jpg';
-      }
-    } else { // doc.data() will be undefined in this case
-      loginGooglePhoto();
-      console.log('No such document in Google!');
-    }
-  }
-  // ver autentificacion si la sesion  esta activa o inactiva //inicia y cerrar sesion
-  function listeningSessionEvent() {
-    const auth = getAuth();
-    // eslint-disable-next-line no-shadow
-    onAuthStateChanged(auth, (user) => {
-      if (user === null) { // User is signed in, see docs for a list of available properties
-      // https://firebase.google.com/docs/reference/js/firebase.User
-        onNavigate('/');
-      } else {
-        const uid = user.uid;
-        obtenerUsuarioId(uid);
-      }
-    });
-  }
   listeningSessionEvent();
 
   // Eventos de navegador

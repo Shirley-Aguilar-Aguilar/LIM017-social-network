@@ -4,7 +4,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: space-around;
-    background-image: url("/img/cover-default.jpg");
+    background-image: url("../img/cover-default.jpg");
     margin: 50px auto;
     border-radius: 15px;
     padding:1%;
@@ -17,6 +17,24 @@
     max-width: 700px;
     cursor: pointer;
 }
+.div-logo-change-image {
+    background-color: rgb(79 58 101 / 96%);
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    z-index: 7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.div-logo-change-image img {
+    z-index: 8;
+    position: relative;
+    height: 150px;
+    border-radius: 30px;
+    box-shadow: 7px 5px 3px black;
+}
+
 .name-usuario{
     color: #FFF;
     font-size: 25px;
@@ -37,14 +55,14 @@
     width: 100px;
     position: absolute;
     left: 10px;
-    background-image: url("img/un-usuario.jpg");
+    background-image: url("../img/un-usuario.jpg");
     bottom: -60px;
     border-radius: 69px ;
     background-position: center;
     background-size: cover;
 }
 .div-uploader-photo {
-    background-image: url("img/icomon/camera1.png");
+    background-image: url("../img/icomon/camera1.png");
     background-size: cover;
     width:23px;
     height: 23px;

@@ -1,5 +1,6 @@
 // importamos la funcion que vamos a testear
-import { myFunction } from '../src/lib/index';
+// eslint-disable-next-line import/no-unresolved
+import { myFunction } from '../lib/index.js';
 
 describe('myFunction', () => {
   it('debería ser una función', () => {

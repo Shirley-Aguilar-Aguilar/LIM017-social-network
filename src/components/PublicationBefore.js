@@ -1,9 +1,5 @@
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.9/firebase-auth.js';
-import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.6.9/firebase-firestore.js';
 import f from '../lib/function.js';
-import { dataPublication, reviewResultPublication, db } from '../cloudFirebase.js';
-// eslint-disable-next-line import/no-cycle
-import { onNavigate } from '../main.js';
+import { dataPublication } from '../cloudFirebase.js';
 import { publicationUser } from '../storage.js';
 
 export const publicationBeforeTemplate = () => {
@@ -17,10 +13,12 @@ export const publicationBeforeTemplate = () => {
   // foto de usuario
   const imgPhotoUser = document.createElement('img');
   imgPhotoUser.className = 'photo-user';
+  imgPhotoUser.src = sessionStorage.getItem('photoUser');
   imgPhotoUser.alt = 'foto de perfil';
   imgPhotoUser.id = 'imagenUsuario';
   const figcaptionUser = document.createElement('figcaption');
   figcaptionUser.className = 'figcaption-name name-before';
+  figcaptionUser.innerText = sessionStorage.getItem('nameUser');
   // inputs de publicación
   const formInputs = document.createElement('form');
   const inputTitle = document.createElement('div');
@@ -68,7 +66,17 @@ export const publicationBeforeTemplate = () => {
   imageUploader.id = 'imgUploader';
   imageUploader.className = 'img-uploader';
   divPreview.appendChild(imagePreview);
-
+  // div para mostrar logo mientras carga foto
+  const divChangeLogoDisplay = document.createElement('div');
+  divChangeLogoDisplay.style.display = 'none';
+  divChangeLogoDisplay.className = 'div-display-change';
+  const divChangeLogo = document.createElement('div');
+  divChangeLogo.className = 'div-logo-change-image-publication';
+  const imageLogo = document.createElement('img');
+  imageLogo.src = '../img/cargando.gif';
+  imageLogo.alt = 'gif de cargando';
+  divChangeLogo.appendChild(imageLogo);
+  divChangeLogoDisplay.appendChild(divChangeLogo);
   // div para emoticos
   const divEmoticons = document.createElement('div');
   divEmoticons.className = 'div-emoticons';
@@ -88,8 +96,8 @@ export const publicationBeforeTemplate = () => {
   // agregando contenedores pequeños a medianos
   figureSection.appendChild(imgPhotoUser);
   figureSection.appendChild(figcaptionUser);
+  formInputs.appendChild(divChangeLogoDisplay);
   formInputs.appendChild(inputTitle);
-  // formInputs.appendChild(inputText);
   formInputs.appendChild(divText);
   containerLogosButton.appendChild(imgShareImage);
   containerLogosButton.appendChild(imgShareStickers);
@@ -109,12 +117,11 @@ export const publicationBeforeTemplate = () => {
     const title = inputTitle.innerHTML;
     const text = divText.innerHTML;
     const date = f.timeNow();
+    const uid = sessionStorage.getItem('uid');
     if ((title === '') || (text === '')) {
       messageTitleText.style.display = 'block';
     } else {
-      dataPublication(title, text, date);
-      messageTitleText.style.display = 'none';
-      reviewResultPublication();
+      dataPublication(uid, title, text, date);
       inputTitle.innerHTML = '';
       divText.innerHTML = '';
       divEmoticons.style.display = 'none';
@@ -122,10 +129,10 @@ export const publicationBeforeTemplate = () => {
   });
 
   // evento para mostrar div de emoticons
-
   imgShareStickers.addEventListener('click', () => {
     if (divEmoticons.style.display === 'none') {
       divEmoticons.style.display = 'grid';
+      divUploader.style.display = 'none';
     } else {
       divEmoticons.style.display = 'none';
     }
@@ -135,79 +142,18 @@ export const publicationBeforeTemplate = () => {
   imgShareImage.addEventListener('click', () => {
     if (divUploader.style.display === 'none') {
       divUploader.style.display = 'flex';
+      divEmoticons.style.display = 'none';
     } else {
       divUploader.style.display = 'none';
     }
   });
-  // obtener nombre y foto de firebase o de google
-  function loginGoogleName() {
-    const userNameGoogle = sessionStorage.getItem('name');
-    if (userNameGoogle != null) {
-      figcaptionUser.innerText = sessionStorage.getItem('name');
-    } else {
-      figcaptionUser.innerText = 'username';
-    }
-  }
-  function loginGooglePhoto() {
-    const photoNameGoogle = sessionStorage.getItem('photo');
-    if (photoNameGoogle != null) {
-      imgPhotoUser.src = sessionStorage.getItem('photo');
-    } else {
-      imgPhotoUser.src = 'img/icomon/user.jpg';
-    }
-  }
-
-  async function obtenerUsuarioId(id) {
-    let user = null;
-    const docRef = doc(db, 'dataUsers', id);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      user = docSnap.data();
-      if (user.name != null) {
-        figcaptionUser.innerText = user.name;
-      } else {
-        figcaptionUser.innerText = 'username';
-      }
-    } else { // doc.data() will be undefined in this case
-      loginGoogleName();
-      console.log('No such document in Google!');
-    }
-
-    if (docSnap.exists()) {
-      user = docSnap.data();
-      if (user.photo != null) {
-        console.log(user.photo);
-      } else {
-        imgPhotoUser.src = 'img/icomon/user.jpg';
-      }
-    } else { // doc.data() will be undefined in this case
-      loginGooglePhoto();
-      console.log('No such document in Google!');
-    }
-  }
-  // ver autentificacion si la sesion  esta activa o inactiva //inicia y cerrar sesion
-  function listeningSessionEvent() {
-    const auth = getAuth();
-    // eslint-disable-next-line no-shadow
-    onAuthStateChanged(auth, (user) => {
-      if (user === null) { // User is signed in, see docs for a list of available properties
-      // https://firebase.google.com/docs/reference/js/firebase.User
-        onNavigate('/');
-      } else {
-        const uid = user.uid;
-        obtenerUsuarioId(uid);
-      }
-    });
-  }
-  listeningSessionEvent();
 
   // evento para capturar evento para subir imagen
   imageUploader.addEventListener('change', (e) => {
     divText.appendChild(divPreview);
     const file = e.target.files[0]; // url de la foto
-    console.log(file);
-    publicationUser(file, imagePreview);
+    divChangeLogoDisplay.style.display = 'block';
+    publicationUser(file, imagePreview, divChangeLogoDisplay.style);
   });
   return sectionPublication;
 };

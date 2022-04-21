@@ -1,15 +1,12 @@
-// eslint-disable-next-line import/no-unresolved
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.9/firebase-auth.js';
-// eslint-disable-next-line import/no-unresolved
-import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.6.9/firebase-firestore.js';
 // eslint-disable-next-line import/no-cycle
 import { headerTemplate } from './Header.js';
 // eslint-disable-next-line import/no-cycle
 import { publicationBeforeTemplate } from './PublicationBefore.js';
-// eslint-disable-next-line object-curly-newline
-import { onGetPublication, deletePublication, getOnlyPublication, updatePublication, db } from '../cloudFirebase.js';
-// eslint-disable-next-line import/no-cycle
-import { onNavigate } from '../main.js';
+import {
+  onGetPublication, deletePublication, getOnlyPublication, updatePublication,
+  likePublication, lovePublication, getUsers,
+} from '../cloudFirebase.js';
+import { publicationUser } from '../storage.js';
 
 export const Feed = () => {
   const divFeed = document.createElement('div');
@@ -17,11 +14,19 @@ export const Feed = () => {
   const mainTemplate = document.createElement('main');
   mainTemplate.className = 'container-publication';
 
-  onGetPublication((querySnapshot) => {
+  onGetPublication(async (querySnapshot) => {
     let html = '';
-    querySnapshot.forEach((doc2) => {
+
+    const allDataUser = await getUsers();
+    const mapaDato = new Map();
+
+    allDataUser.forEach((dataUser) => {
+      mapaDato.set(`${dataUser.data().id}-photo`, dataUser.data().urlPhotoUser);
+      mapaDato.set(`${dataUser.data().id}-name`, dataUser.data().name);
+    });
+    querySnapshot.forEach(async (doc2) => {
       const publicationNew = doc2.data();
-      if (publicationNew.uid === sessionStorage.getItem('uid')) {
+      if (sessionStorage.getItem('uid') === publicationNew.uid) {
         html += `
         <section class= 'container-publication-final' >
             <div style='display:none;' class = 'message-alert-content div-alert-message-color'>
@@ -31,20 +36,30 @@ export const Feed = () => {
             </div>
           <div class = 'container-user-edit direction' >
              <figure class = figure-name-photo direction' >
-                 <img class= 'photo-user-pub' id = 'photoUser' src='' alt='foto de perfil'>
-                 <figcaption class ='user-name-pub' ></figcaption>
+                 <img class= 'photo-user-pub' id = 'photoUser' src='${sessionStorage.getItem('photoUser')}' alt='foto de perfil'>
+                 <figcaption class ='user-name-pub' >${sessionStorage.getItem('nameUser')}</figcaption>
                  <img class= 'share-edit-logo' data-id='${doc2.id}' src='img/icomon/pencil.jpg' alt='logo para editar'>
                  <img class= 'share-trash-logo' data-id='${doc2.id}' src='img/icomon/bin.jpg' alt='logo para eliminar publicación'>
              </figure>
           </div>
+          <div class='div-display-change' style='display: none;'>
+                <div class='div-logo-change-image-publication'>
+                  <img src='../img/cargando.gif' alt='gif de cargando'>
+                </div>
+          </div>
           <div  contentEditable ='false' class= 'title-area '  id= 'newTitle' >${publicationNew.title}</div>
-          <div  contentEditable ='false'   class= 'text-area div-text' id= 'newText'>${publicationNew.text}</div>
+          <div  contentEditable ='false'   class= 'text-area div-text' id= 'newText'>${publicationNew.text}
+          </div>
           <div class = 'direction' >
+             <img style='display:none;' class="share-image-logo logo-smile-image" data-id='${doc2.id}'  src="img/icomon/images.jpg" alt="logo para agregar imagenes a la publicación">
              <img  style='display:none;' class='share-stickers-logo like-love-smile ' src='img/icomon/smile.jpg' alt='logo para agregar stickers a la publicación'>
-             <img class= 'like-love-smile ' src='img/icomon/like.jpg' alt='logo para dar me encanta'>
-             <img class= 'like-love-smile ' src='img/icomon/heart.jpg' alt='logo para dar love'>
+             <img class= 'like-love-smile btnlike' data-id='${doc2.id}' src= ${!publicationNew.like ? 'img/icomon/like.jpg' : publicationNew.like.find((e) => e === sessionStorage.getItem('uid')) ? 'img/icomon/likeO.jpg' : 'img/icomon/like.jpg'} alt='logo para dar me encanta'><figcaption class ='count-like-love' >${publicationNew.like ? publicationNew.like.length : 0}</figcaption>
+             <img class= 'like-love-smile btnlove' data-id='${doc2.id}' src= ${!publicationNew.love ? 'img/icomon/heart.jpg' : publicationNew.love.find((e) => e === sessionStorage.getItem('uid')) ? 'img/icomon/heartO.jpg' : 'img/icomon/heart.jpg'} alt='logo para dar love'><figcaption class ='count-like-love' >${publicationNew.love ? publicationNew.love.length : 0}</figcaption>
              <button style='display:none;'  class = 'btn-save'>Guardar cambios</button>
              <div class='div-emoticons ' id='divEmoticon'; style='display: none;'></div>
+          </div>
+          <div class = 'div-uploader' style='display:none;'>
+                 <input type ='file' id = 'imgUploader' class = 'img-uploader' >
           </div>
           
         </section>
@@ -54,21 +69,67 @@ export const Feed = () => {
         <section class= 'container-publication-final' >
           <div class = 'container-user-edit direction' >
              <figure class = figure-name-photo direction' >
-                 <img class= 'photo-user-pub' id = 'photoUser' src='img/icomon/user.jpg' alt='foto de perfil'>
-                 <figcaption class ='user-name-pub' >Username</figcaption>
+                 <img class= 'photo-user-pub' id = 'photoUser' src='${mapaDato.get(`${publicationNew.uid.toString()}-photo`)}'  alt='foto de perfil'>
+                 <figcaption class ='user-name-pub' >${mapaDato.get(`${publicationNew.uid.toString()}-name`)}</figcaption>
              </figure>
           </div>
           <div  contentEditable ='false' id= 'newTitle'>${publicationNew.title}</div>
           <div  contentEditable ='false'  class= 'p-text-publication' id= 'newText' >${publicationNew.text}</div>
           <div class = 'direction' >
-             <img class= 'like-love-smile' src='img/icomon/like.jpg' alt='logo para dar me encanta'>
-             <img class= 'like-love-smile' src='img/icomon/heart.jpg' alt='logo para dar love'>
+          <img class= 'like-love-smile btnlike' data-id='${doc2.id}' src= ${!publicationNew.like ? 'img/icomon/like.jpg' : publicationNew.like.find((e) => e === sessionStorage.getItem('uid')) ? 'img/icomon/likeO.jpg' : 'img/icomon/like.jpg'} alt='logo para dar me encanta'><figcaption class ='count-like-love' >${publicationNew.like ? publicationNew.like.length : 0}</figcaption>
+          <img class= 'like-love-smile btnlove' data-id='${doc2.id}' src= ${!publicationNew.love ? 'img/icomon/heart.jpg' : publicationNew.love.find((e) => e === sessionStorage.getItem('uid')) ? 'img/icomon/heartO.jpg' : 'img/icomon/heart.jpg'} alt='logo para dar love'><figcaption class ='count-like-love' >${publicationNew.love ? publicationNew.love.length : 0}</figcaption>
           </div>
         </section>
       `;
       }
     });
     mainTemplate.innerHTML = html;
+    // AGREGANDO FUNCIONALIDAD DE IMAGENES
+    const buttonShareImage = mainTemplate.querySelectorAll('.share-image-logo');
+    buttonShareImage.forEach((btnImage) => {
+      const sectionPublication = btnImage.parentNode.parentNode;
+      const divUploader = sectionPublication.querySelector('.div-uploader');
+      const inputUploader = sectionPublication.querySelector('.img-uploader');
+      const divEmoticon = sectionPublication.querySelector('.div-emoticons');
+      const areaText = sectionPublication.querySelector('.text-area');
+      const divChangeLogoDisplay = sectionPublication.querySelector('.div-display-change');
+      const buttonShare = sectionPublication.querySelector('.share-image-logo');
+      buttonShare.addEventListener('click', () => {
+        if (divUploader.style.display === 'none') {
+          divUploader.style.display = 'flex';
+          divEmoticon.style.display = 'none';
+        } else {
+          divUploader.style.display = 'none';
+        }
+      });
+      inputUploader.addEventListener('change', (e) => {
+        const divPreview = document.createElement('div');
+        divPreview.className = 'div-preview';
+        const imagePreview = document.createElement('img');
+        imagePreview.id = 'imgPreview';
+        divPreview.appendChild(imagePreview);
+        areaText.appendChild(divPreview);
+
+        const file = e.target.files[0]; // url de la foto
+        console.log(file);
+        divChangeLogoDisplay.style.display = 'block';
+        publicationUser(file, imagePreview, divChangeLogoDisplay.style);
+      });
+    });
+    // LIKE A PUBLICACIONES
+    const buttonLike = mainTemplate.querySelectorAll('.btnlike');
+    buttonLike.forEach((btn) => {
+      btn.addEventListener('click', ({ target: { dataset } }) => {
+        likePublication(dataset.id);
+      });
+    });
+    // LOVE A PUBLICACIONES
+    const buttonLove = mainTemplate.querySelectorAll('.btnlove');
+    buttonLove.forEach((btn) => {
+      btn.addEventListener('click', ({ target: { dataset } }) => {
+        lovePublication(dataset.id);
+      });
+    });
     // ELIMINANDO PUBLICACIONES
     const buttonDelete = mainTemplate.querySelectorAll('.share-trash-logo');
     buttonDelete.forEach((btn) => {
@@ -96,13 +157,16 @@ export const Feed = () => {
         const doc3 = await getOnlyPublication(e.target.dataset.id); // trae publicaciones por id
         const id = e.target.dataset.id;
         const sectionPublication = btn2.parentNode.parentNode.parentNode;
-        // activamos el text area y el div para editar
+        // obtenemos los contenedores
         const areaTitle = sectionPublication.querySelector('.title-area');
         const areaText = sectionPublication.querySelector('.text-area');
         // activando contenedores
         areaTitle.contentEditable = true;
         areaText.contentEditable = true;
         // mostramos boton para guardar cambios
+        const inputUploader = sectionPublication.querySelector('.div-uploader');
+        const imgUploader = sectionPublication.querySelector('.share-image-logo');
+        imgUploader.style.display = 'block';
         const emoticon = sectionPublication.querySelector('.share-stickers-logo');
         const buttonSave = sectionPublication.querySelector('.btn-save');
         // eslint-disable-next-line no-param-reassign
@@ -125,6 +189,7 @@ export const Feed = () => {
         emoticon.addEventListener('click', () => {
           if (divEmoticon.style.display === 'none') {
             divEmoticon.style.display = 'grid';
+            inputUploader.style.display = 'none';
           } else {
             divEmoticon.style.display = 'none';
           }
@@ -146,72 +211,6 @@ export const Feed = () => {
           areaText.contentEditable = false;
         });
       });
-    });
-    buttonEdit.forEach((btn) => {
-      const sectionPublication = btn.parentNode.parentNode;
-      // obtener nombre y foto de firebase o de google de cada usuario
-      function loginGoogleName() {
-        const userNameGoogle = sessionStorage.getItem('name');
-        if (userNameGoogle != null) {
-          sectionPublication.querySelector('.user-name-pub').innerText = sessionStorage.getItem('name');
-        } else {
-          sectionPublication.querySelector('.user-name-pub').innerText = 'username';
-        }
-      }
-      function loginGooglePhoto() {
-        const photoNameGoogle = sessionStorage.getItem('photo');
-        if (photoNameGoogle != null) {
-          sectionPublication.querySelector('.photo-user-pub').src = sessionStorage.getItem('photo');
-        } else {
-          sectionPublication.querySelector('.photo-user-pub').src = 'img/icomon/user.jpg';
-        }
-      }
-
-      async function obtenerUsuarioId(id) {
-        let user = null;
-        const docRef = doc(db, 'dataUsers', id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          user = docSnap.data();
-          if (user.name != null) {
-            sectionPublication.querySelector('.user-name-pub').innerText = user.name;
-          } else {
-            sectionPublication.querySelector('.user-name-pub').innerText = 'username';
-          }
-        } else { // doc.data() will be undefined in this case
-          loginGoogleName();
-          console.log('No such document in Google!');
-        }
-
-        if (docSnap.exists()) {
-          user = docSnap.data();
-          if (user.photo != null) {
-            console.log(user.photo);
-          } else {
-            sectionPublication.querySelector('.photo-user-pub').src = 'img/icomon/user.jpg';
-          }
-        } else { // doc.data() will be undefined in this case
-          loginGooglePhoto();
-          console.log('No such document in Google!');
-        }
-      }
-
-      // ver autentificacion si la sesion  esta activa o inactiva //inicia y cerrar sesion
-      function listeningSessionEvent() {
-        const auth = getAuth();
-        // eslint-disable-next-line no-shadow
-        onAuthStateChanged(auth, (user) => {
-          if (user === null) { // User is signed in, see docs for a list of available properties
-          // https://firebase.google.com/docs/reference/js/firebase.User
-            onNavigate('/');
-          } else {
-            const uid = user.uid;
-            obtenerUsuarioId(uid);
-          }
-        });
-      }
-      listeningSessionEvent();
     });
   });
   divFeed.appendChild(headerTemplate());
