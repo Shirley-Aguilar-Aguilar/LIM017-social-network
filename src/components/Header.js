@@ -1,7 +1,9 @@
+/* eslint-disable no-return-assign */
+/* eslint-disable no-confusing-arrow */
 // eslint-disable-next-line import/no-cycle
-import { onNavigate } from '../main.js';
+import { onNavigate } from '../Router.js';
 // eslint-disable-next-line import/no-cycle
-import { cerrarSesion, listeningSessionEvent } from '../auth.js';
+import { cerrarSesion, listeningSessionEvent } from '../lib/auth.js';
 
 export const headerTemplate = () => {
   const headerdiv = document.createElement('header');
@@ -12,6 +14,7 @@ export const headerTemplate = () => {
   const figureNamePhoto = document.createElement('figure');
   figureNamePhoto.className = 'photo-user-container';
   const aPhoto = document.createElement('a');
+  aPhoto.id = 'aPhoto';
   const imgUser = document.createElement('img');
   imgUser.className = 'photo-user';
   imgUser.src = sessionStorage.getItem('photoUser');
@@ -48,6 +51,7 @@ export const headerTemplate = () => {
   const containerNav = document.createElement('nav');
   containerNav.className = 'container-search-photo-nav width-content';
   const aWall = document.createElement('a');
+  aWall.id = 'aWall';
   const imgWall = document.createElement('img');
   imgWall.className = 'logo-wall';
   imgWall.src = 'img/icomon/home.jpg';
@@ -60,6 +64,7 @@ export const headerTemplate = () => {
   // navegador oculto
   const lines = document.createElement('img');
   lines.className = 'nav-lines';
+  lines.id = 'navLines';
   lines.src = 'img/icomon/menu.jpg';
   const containerNavHide = document.createElement('div');
   containerNavHide.className = 'container-options-nav';
@@ -71,10 +76,9 @@ export const headerTemplate = () => {
 
   const liConfig = document.createElement('li');
   const aConfig = document.createElement('a');
+  aConfig.id = 'aConfig';
   aConfig.innerText = 'Configurar cuenta';
-  aConfig.addEventListener('click', () => {
-    onNavigate('/configurar');
-  });
+  aConfig.addEventListener('click', () => onNavigate('/configurar'));
 
   const liDelete = document.createElement('li');
   const aDelete = document.createElement('a');
@@ -90,9 +94,8 @@ export const headerTemplate = () => {
   const aClose = document.createElement('a');
   aClose.href = '#';
   aClose.innerText = 'Cerrar cuenta';
-  aClose.addEventListener('click', () => {
-    cerrarSesion();
-  });
+  aClose.id = 'aClose';
+  aClose.addEventListener('click', () => cerrarSesion());
 
   // agregando a contenedor mediano
   divContainerSearchPhoto.appendChild(imgComputer);
@@ -122,13 +125,7 @@ export const headerTemplate = () => {
   headerdiv.appendChild(containerNav);
 
   // evento para aparecer el nav
-  lines.addEventListener('click', () => {
-    if (containerNavHide.style.display === 'none') {
-      containerNavHide.style.display = 'block';
-    } else {
-      containerNavHide.style.display = 'none';
-    }
-  });
+  lines.addEventListener('click', () => (containerNavHide.style.display === 'none') ? (containerNavHide.style.display = 'block') : (containerNavHide.style.display = 'none'));
 
   listeningSessionEvent();
 

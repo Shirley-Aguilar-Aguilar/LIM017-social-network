@@ -1,21 +1,19 @@
-/* eslint-disable max-len */
-import {
-  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, signOut,
-  // eslint-disable-next-line no-unused-vars
-  updatePassword, onAuthStateChanged, sendPasswordResetEmail,
-// eslint-disable-next-line import/no-unresolved
-} from 'https://www.gstatic.com/firebasejs/9.6.9/firebase-auth.js';
+/* eslint-disable no-unused-vars */
 // eslint-disable-next-line import/no-cycle
-import { onNavigate } from './main.js';
+import { onNavigate } from '../Router.js';
 import { dataUser, getUser } from './cloudFirebase.js';
+// eslint-disable-next-line import/no-cycle
+import {
+  createUser, accesUserExist, signGoogle, createNewPassword, closeSession, validateCorrectPassword,
+  stateUser, verifyUserActive,
+} from './controller-firebase/auth-functions.js';
 
 // FUNCIÓN PARA CREAR NUEVOS USUARIOS
 export async function register(name, email, password) {
-  const auth = getAuth();
   let result = '';
-  await createUserWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      const idUser = userCredential.user.uid; // id de usuario
+  await createUser(email, password)
+    .then((uid) => {
+      const idUser = uid; // id de usuario
       result = true;
       // imagenes predeterminadas
       const urlPhotoUser = 'https://firebasestorage.googleapis.com/v0/b/social-network-programmers.appspot.com/o/user.jpg?alt=media&token=231ef8f9-fbee-4755-b3db-7cd80cbd3cf9';
@@ -44,11 +42,10 @@ export async function register(name, email, password) {
 
 // FUNCIÓN PARA ACCESO A USUARIOS EXISTENTES
 export function accesUser(email, password) {
-  const auth = getAuth();
-  signInWithEmailAndPassword(auth, email, password)
-    .then(async (userCredential) => {
-      // Signed in
-      const usuario = userCredential.user.uid;
+  accesUserExist(email, password)
+    .then(async (credential) => {
+    // Signed in
+      const usuario = credential.user.uid;
       const docSnap = await getUser(usuario);
       const urlPhotoUser = docSnap.data().urlPhotoUser;
       const nameUser = docSnap.data().name;
@@ -57,30 +54,22 @@ export function accesUser(email, password) {
       sessionStorage.setItem('email', email);
       sessionStorage.setItem('nameUser', nameUser);
       sessionStorage.setItem('photoUser', urlPhotoUser);
-
       onNavigate('/feed');
     })
-    .catch((error) => {
-      console.log(error.message);
+    .catch(() => {
       document.getElementById('messageHide').style.display = 'block';
     });
 }
-// AUTENTICACIÓN CON GOOGLE
-const provider = new GoogleAuthProvider();
 
+// AUTENTICACIÓN CON GOOGLE
 export async function accesGoogle() {
-  const auth1 = getAuth();
-  signInWithPopup(auth1, provider)
-    .then(async (result) => {
-      // This gives you a Google Access Token. You can use it to access the Google API.
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      const token = credential.accessToken;
-      // The signed-in user info.
-      const user = result.user;
+  let result = '';
+  signGoogle()
+    .then(async (user) => {
       const nameUser = user.displayName;
       const idUser = user.uid;
       const emailUser = user.email;
-
+      const token = user.accessToken;
       let urlPhotoUser = null;
       let urlCoverPage = null;
       const docSnap = await getUser(idUser);
@@ -101,120 +90,97 @@ export async function accesGoogle() {
         dataUser(idUser, nameUser, emailUser, token, urlPhotoUser, urlCoverPage);
       }
       onNavigate('/feed');
+      result = true;
     }).catch((error) => {
-      const credential = GoogleAuthProvider.credentialFromError(error);
-      console.error(credential, error);
+      result = false;
     });
-}
-
-// AUTENTICACIÓN CON FB
-const provider2 = new FacebookAuthProvider();
-
-export function accesFacebook() {
-  const auth = getAuth();
-  signInWithPopup(auth, provider2)
-    .then((result) => {
-      // The signed-in user info.
-      // This gives you a Facebook Access Token. You can use it to access the Facebook API.
-      const credential = FacebookAuthProvider.credentialFromResult(result);
-      const accessToken = credential.accessToken;
-      const user = result.user;
-      console.log(accessToken, user);
-      onNavigate('/feed');
-    })
-    .catch((error) => {
-      const credential = FacebookAuthProvider.credentialFromError(error);
-      console.log(credential, error);
-    });
+  return result;
 }
 
 // REESTABLECER CONTRASEÑA
-export function restorePassword() {
-  const auth = getAuth();
-  const email = document.getElementById('txtCorreo').value;
-  console.log(email);
-  sendPasswordResetEmail(auth, email)
+export function restorePassword(email, message) {
+  createNewPassword(email)
     .then(() => {
       // Password reset email sent!
-      console.log('Puede cambiar contraseña');
+      // eslint-disable-next-line no-param-reassign
+      message.innerText = 'Puede cambiar contraseña';
+      // eslint-disable-next-line no-param-reassign
+      message.style.display = 'block';
     })
     .catch((error) => {
-      const errorCode = error.code;
-      console.log(errorCode);
       const errorMessage = error.message;
-      console.log(errorMessage);
+      // eslint-disable-next-line no-param-reassign
+      message.innerText = 'Tiene que ingresar un correo válido';
+      // eslint-disable-next-line no-param-reassign
+      message.style.display = 'block';
     });
 }
 
 // FUNCIÓN PARA CERRAR SESIÓN
 export function cerrarSesion() {
-  const auth = getAuth();
-  signOut(auth)
-    // eslint-disable-next-line no-unused-vars
-    .then((userCredencial) => {
+  closeSession()
+    .then(() => {
       // Password reset email sent!
       sessionStorage.clear();
       onNavigate('/');
     })
-    .catch((error) => {
-      console.log(error.message);
+    .catch(() => {
       document.getElementById('messageHide').style.display = 'block';
     });
 }
 
+// Cambiar contraseña
 export function validatePassword(password) {
   return password != null && password !== '';
 }
+export function returnLogin() {
+  onNavigate('/');
+}
 
 export function configurationPassword() {
-  const auth = getAuth();
-  console.log(auth);
   const currentPassword = document.getElementById('txtPasswordCurrent').value;
   const newPassword = document.getElementById('txtPasswordNew').value;
   const newPasswordConfirm = document.getElementById('txtPasswordNewRepeat').value;
   const email = sessionStorage.getItem('email');
+  function time() {
+    const messageError = document.getElementById('cardHide');
+    messageError.style.display = 'none';
+  }
   if (newPassword !== newPasswordConfirm) {
-    console.log('las contraseñas no coinciden');
+    const messageError = document.getElementById('cardHide');
+    messageError.innerText = 'Las contraseñas nuevas no coinciden';
+    messageError.style.display = 'block';
+    setTimeout(time, 1000);
     return;
   }
   if (!validatePassword(newPassword)) {
-    console.log('la contraseña no es válida');
+    const messageError = document.getElementById('cardHide');
+    messageError.innerText = 'Contraseña no valida';
+    messageError.style.display = 'block';
+    setTimeout(time, 1000);
     return;
   }
-  // Hacemos login para validar si currentpassword es la contraseña correcta
-  signInWithEmailAndPassword(auth, email, currentPassword)
-    .then(() => {
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          console.log(user);
+  async function validyUser() {
+    const docSnap = await getUser(sessionStorage.getItem('uid'));
+    const passwordFirestore = docSnap.data().password;
+    if (currentPassword !== passwordFirestore) {
+      const messageError = document.getElementById('cardHide');
+      messageError.innerText = 'Contraseña antigua es incorrecta';
+      messageError.style.display = 'block';
+      setTimeout(time, 1000);
+    }
+  }
+  validyUser();
 
-          updatePassword(user, newPassword).then(() => {
-            console.log('Update successful');
-            onNavigate('/');
-          }).catch((error) => {
-            // An error ocurred
-            console.log(error.message);
-          });
-        } else {
-          console.log(user);
-        }
-      });
-    })
-    .catch((error) => {
-      console.log('la contraseña actual no es correcta');
-      console.log(error.message);
-      document.getElementById('messageHide').style.display = 'block';
+  // actualizamos la contraseña
+  validateCorrectPassword(email, currentPassword)
+    .then(() => {
+      stateUser(newPassword);
+      setTimeout(returnLogin, 1000);
     });
 }
 
 // VERIFICAR SI SESIÓN ESTA ACTIVA O NO => CERRAR SI ESTA INACTIVA
 export function listeningSessionEvent() {
-  const auth = getAuth();
-  // eslint-disable-next-line no-shadow
-  onAuthStateChanged(auth, (user) => {
-    if (user === null) { // User is signed in, see docs for a list of available properties
-    // https://firebase.google.com/docs/reference/js/firebase.User
-      onNavigate('/');
-    }
-  });
+  verifyUserActive();
 }

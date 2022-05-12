@@ -1,63 +1,66 @@
-// restablecer contraseña
 // eslint-disable-next-line import/no-cycle
-
+import { restorePassword } from '../lib/auth.js';
 // eslint-disable-next-line import/no-cycle
-import { restorePassword } from '../auth.js';
-// eslint-disable-next-line import/no-cycle
+import { onNavigate } from '../Router.js';
 
 export const ResetPassword = () => {
   const sectionRestPassword = document.createElement('section');
-  sectionRestPassword.className = 'container-publication';
+  sectionRestPassword.className = 'section-configuration';
+  const mainSection = document.createElement('div');
+  mainSection.className = 'container-configuration';
+
+  const mainResset = document.createElement('div');
+  mainResset.className = 'text-center';
+
   const titleHeader = document.createElement('h2');
   titleHeader.className = 'text-center';
+  titleHeader.id = 'titlePage';
   titleHeader.innerText = 'Recupera tu cuenta';
-  const titleMain = document.createElement('div');
-  titleMain.className = 'text-center';
-  titleMain.innerText = 'Ingresa tu correo electrónico  para buscar tu cuenta.';
+
+  const instruction = document.createElement('p');
+  instruction.innerText = 'Ingresa tu correo electrónico  para buscar tu cuenta.';
   const inputCorreo = document.createElement('input');
   inputCorreo.type = 'text';
   inputCorreo.autocomplete = 'off';
-  inputCorreo.className = 'input-login';
+  inputCorreo.className = 'input-reset';
   inputCorreo.name = 'txtUser';
   inputCorreo.id = 'txtCorreo';
   inputCorreo.placeholder = 'Correo electrónico';
   const buttonRecuperarCuenta = document.createElement('button');
   buttonRecuperarCuenta.className = 'button-form';
+  buttonRecuperarCuenta.id = 'buttonResetPassword';
   buttonRecuperarCuenta.innerText = 'Continuar ';
-  buttonRecuperarCuenta.addEventListener('click', () => restorePassword());
-
+  const buttonReturn = document.createElement('button');
+  buttonReturn.className = 'button-form';
+  buttonReturn.id = 'buttonReturnReset';
+  buttonReturn.innerText = 'Regresar';
+  buttonReturn.addEventListener('click', () => (onNavigate('/feed')));
   // creando div oculto
   const divHideMessage = document.createElement('div');
   divHideMessage.id = 'messageHideCorreo';
   const messageError = document.createElement('p');
   messageError.innerText = 'Tiene que ingresar un correo válido';
+  messageError.id = 'messageError';
+  divHideMessage.style.display = 'none';
   divHideMessage.appendChild(messageError);
 
-  sectionRestPassword.appendChild(titleHeader);
-  titleHeader.appendChild(titleMain);
-  titleMain.appendChild(inputCorreo);
-  titleMain.appendChild(buttonRecuperarCuenta);
+  sectionRestPassword.appendChild(mainSection);
+  mainSection.appendChild(divHideMessage);
+  mainSection.appendChild(mainResset);
+  mainResset.appendChild(titleHeader);
+  mainResset.appendChild(instruction);
+  mainResset.appendChild(inputCorreo);
+  mainResset.appendChild(buttonRecuperarCuenta);
+  mainResset.appendChild(buttonReturn);
+
+  buttonRecuperarCuenta.addEventListener('click', () => {
+    const valueEmail = inputCorreo.value;
+    if (valueEmail.length < 8) {
+      divHideMessage.style.display = 'block';
+    } else {
+      restorePassword(valueEmail, messageError);
+      onNavigate('/');
+    }
+  });
   return sectionRestPassword;
 };
-
-// <h2 className="uiHeaderTitle" aria-hidden="true">Recupera tu cuenta</h2>
-// <div className="_9nq2 marginBottom16px">Ingresa tu correo electrónico o número de celular para
-//   buscar tu cuenta.</div>
-// <input type="text" className="inputtext _9o1w" id="identify_email" name="email"
-//        placeholder="Correo electrónico o número de celular" autoFocus="1"
-//        aria-label="Correo electrónico o número de celular">
-// <div>
-//   <div>
-//     <a role="button" className="_42ft _4jy0 _9nq1 textPadding20px _4jy3 _517h _51sy"
-//        href="/login.php">Cancelar</a>
-//
-//     <button value="1" className="_42ft _4jy0 _9nq0 textPadding20px _4jy3 _4jy1 selected _51sy"
-//             type="submit" name="did_submit" id="did_submit">Buscar
-//     </button>
-//   </div>
-//
-// </div>
-//
-//   .clearfix {
-//   zoom: 1;
-// }

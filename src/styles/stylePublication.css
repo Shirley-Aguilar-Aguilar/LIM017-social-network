@@ -104,19 +104,19 @@
     color:gray
 }
 /*todos los emoticones tiene mismo selector para final publication y publication before*/
-.div-emoticons{
+.div-emoticons {
     position: absolute;
     border: 1px;
     border-style: solid;
     display: grid;
-    grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: repeat(9, 1fr);
+    grid-template-columns: repeat(9, 1fr);
     background-color: white;
     border-radius: 15px;
     padding: 1%;
     margin-top: 29px;
 }
-.emoticons{/*todos los emoticones en el div en publication-before*/
+.emoticons {/*todos los emoticones en el div en publication-before*/
     height: 36px;
     width: 36px;
 }
@@ -302,6 +302,11 @@
     font-size: 10px;
     display: flex;
     justify-content: space-between;
+}
+.container-user-date {
+    font-size: 10px;
+    align-self: flex-end;
+    padding-right: 10px;
 }
 .div-alert-message-color {
     background-color: rgb(79 58 101 / 96%);

@@ -1,7 +1,8 @@
 // eslint-disable-next-line import/no-cycle
-import { onNavigate } from '../main.js';
+import { onNavigate } from '../Router.js';
 // eslint-disable-next-line import/no-cycle
-import { register } from '../auth.js';
+import { register } from '../lib/auth.js';
+import f from '../lib/functions.js';
 
 export const Register = () => {
   const sectionRegister = document.createElement('section');
@@ -23,12 +24,14 @@ export const Register = () => {
   labelName.innerText = 'Nombre *';
   const inputName = document.createElement('input');
   inputName.className = 'input-form';
+  inputName.id = 'inputName';
 
   const labelEmail = document.createElement('label');
   labelEmail.className = 'label-form';
   labelEmail.innerText = 'Correo *';
   const inputEmail = document.createElement('input');
   inputEmail.className = 'input-form';
+  inputEmail.id = 'inputEmail';
   inputEmail.type = 'email';
 
   const labelPassword = document.createElement('label');
@@ -43,6 +46,7 @@ export const Register = () => {
 
   const icoEye = document.createElement('i');
   icoEye.className = 'ico-eye-hide';
+  icoEye.id = 'icoEyeHide';
   icoEye.addEventListener('click', () => { if (icoEye.className === 'ico-eye-hide') { icoEye.className = 'ico-eye'; inputPassword.type = 'text'; } else { icoEye.className = 'ico-eye-hide'; inputPassword.type = 'password'; } });
 
   // Nivel de seguridad de contraseña
@@ -51,6 +55,7 @@ export const Register = () => {
   const divDescSecurity = document.createElement('div');
   divDescSecurity.id = 'divSecurityPassword';
   const descSecurityCant = document.createElement('div');
+  descSecurityCant.id = 'descSecurityCant';
   descSecurityCant.innerHTML = 'Min(6): <img src=\'img/false.png\'></img>';
   const descSecurityMin = document.createElement('div');
   descSecurityMin.innerHTML = 'Minus: <img src=\'img/false.png\'></img>';
@@ -77,6 +82,7 @@ export const Register = () => {
 
   const icoEyeConfirm = document.createElement('i');
   icoEyeConfirm.className = 'ico-eye-hide';
+  icoEyeConfirm.id = 'icoEyeConfirm';
   icoEyeConfirm.addEventListener('click', () => {
     if (icoEyeConfirm.className === 'ico-eye-hide') {
       icoEyeConfirm.className = 'ico-eye'; inputConfirmPassword.type = 'text';
@@ -88,6 +94,7 @@ export const Register = () => {
   divButtons.className = 'text-center';
   const buttonRegister = document.createElement('button');
   buttonRegister.className = 'button-form';
+  buttonRegister.id = 'buttonForm';
   buttonRegister.innerText = 'Registrar';
   // boton de iniciar sesión
   const buttonReturn = document.createElement('button');
@@ -103,19 +110,12 @@ export const Register = () => {
 
   const divEmailHide = document.createElement('div');
   divEmailHide.className = 'message-hide';
+  divEmailHide.id = 'messageHide';
   divEmailHide.innerText = 'Correo invalido';
 
   const divPasswordConfirmHide = document.createElement('div');
   divPasswordConfirmHide.className = 'message-hide';
   divPasswordConfirmHide.innerText = 'Confirmar contraseña es incorrecta';
-
-  /* const divDateHide = document.createElement('div');
-  divDateHide.className = 'message-hide';
-  divDateHide.innerText = 'Fecha de nacimiento invalido'; */
-
-  // /* const divPhoneHide = document.createElement('div');
-  // divPhoneHide.className = 'message-hide';
-  // divPhoneHide.innerText = 'Número de celular invalido'; ELIMINAR*/
 
   const divMessageAlert = document.createElement('div');
   divMessageAlert.className = 'message-alert';
@@ -143,71 +143,25 @@ export const Register = () => {
   const textMessageAlertContentIncorrect = document.createElement('p');
   textMessageAlertContentIncorrect.innerText = 'REGISTRO INCORRECTO';
   const textMessageIncorrect = document.createElement('p');
+  textMessageIncorrect.id = 'textMessageIncorrect';
   textMessageIncorrect.style.fontSize = '14px';
 
   // validando correo
-  // eslint-disable-next-line no-useless-escape
-  const regexEmail = /([\da-z_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$/;
-  function validy() {
+  inputEmail.addEventListener('keyup', () => {
     // eslint-disable-next-line no-unused-expressions
-    !regexEmail.test(inputEmail.value) ? divEmailHide.style.display = 'block' : divEmailHide.style.display = 'none';
-  }
-  inputEmail.addEventListener('keyup', validy);
+    !f.validyEmail(inputEmail.value) ? divEmailHide.style.display = 'block' : divEmailHide.style.display = 'none';
+  });
 
   // validado contraseña
-  const regexMinus = /(?=.*[a-z]).+$/;
-  const regexMayus = /(?=.*[A-Z]).+$/;
-  const regexNumber = /(?=.*[0-9]).+$/;
-  const regexCharac = /(?=.*[-+_!@#$%^&*.,?]).+$/;
   inputPassword.addEventListener('keyup', () => {
-    let count = 0;
-    if (inputPassword.value.length >= 6) {
-      descSecurityCant.innerHTML = 'Min(6): <img src=\'img/check.png\'></img>';
-      divPasswordHide.style.display = 'none';
-      count += 1;
-    } else {
-      descSecurityCant.innerHTML = 'Min(6): <img src=\'img/false.png\'></img>';
-      divPasswordHide.style.display = 'block';
-    }
-    if (regexMinus.test(inputPassword.value)) {
-      descSecurityMin.innerHTML = 'Minus: <img src=\'img/check.png\'></img>';
-      count += 1;
-    } else {
-      descSecurityMin.innerHTML = 'Minus: <img src=\'img/false.png\'></img>';
-    }
-    if (regexMayus.test(inputPassword.value)) {
-      descSecurityMay.innerHTML = 'Mayus: <img src=\'img/check.png\'></img>';
-      count += 1;
-    } else {
-      descSecurityMay.innerHTML = 'Mayus: <img src=\'img/false.png\'></img>';
-    }
-    if (regexNumber.test(inputPassword.value)) {
-      descSecurityNumber.innerHTML = 'Num: <img src=\'img/check.png\'></img>';
-      count += 1;
-    } else {
-      descSecurityNumber.innerHTML = 'Num: <img src=\'img/false.png\'></img>';
-    }
-    if (regexCharac.test(inputPassword.value)) {
-      descSecurityCharacter.innerHTML = 'Carac: <img src=\'img/check.png\'></img>';
-      count += 1;
-    } else {
-      descSecurityCharacter.innerHTML = 'Carac: <img src=\'img/false.png\'></img>';
-    }
-
-    switch (count) {
-      case 3:
-        divLevelSecurity.className = 'input-form div-level-medium';
-        break;
-      case 4:
-        divLevelSecurity.className = 'input-form div-level-higth';
-        break;
-      case 5:
-        divLevelSecurity.className = 'input-form div-level-higth-top';
-        break;
-      default:
-        divLevelSecurity.className = 'input-form div-level-low';
-        break;
-    }
+    const val = f.validyPassword(inputPassword.value);
+    descSecurityCant.innerHTML = val.cant;
+    divPasswordHide.style.display = val.divH;
+    descSecurityMin.innerHTML = val.minus;
+    descSecurityMay.innerHTML = val.mayus;
+    descSecurityNumber.innerHTML = val.number;
+    descSecurityCharacter.innerHTML = val.character;
+    divLevelSecurity.className = val.levelS;
   });
 
   divHeader.appendChild(imgLogo);
@@ -267,12 +221,16 @@ export const Register = () => {
   async function resultRegister() {
     // eslint-disable-next-line max-len
     const resp = await register(inputName.value, inputEmail.value, inputPassword.value);
-    if (resp === true) {
+    let result = '';
+    if (resp === true) { //
       divMessageAlert.style.display = 'flex';
+      result = true;
     } else {
       textMessageIncorrect.innerText = resp;
       divMessageAlertIncorrect.style.display = 'flex';
+      result = false;
     }
+    return result;
   }
 
   buttonRegister.addEventListener('click', () => {
@@ -280,7 +238,7 @@ export const Register = () => {
     if (inputName.value.length === 0) {
       textMessageIncorrect.innerText = 'Nombre invalido';
       divMessageAlertIncorrect.style.display = 'flex';
-    } else if (!regexEmail.test(inputEmail.value)) {
+    } else if (!f.validyEmail(inputEmail.value)) {
       textMessageIncorrect.innerText = 'Correo invalido';
       divMessageAlertIncorrect.style.display = 'flex';
     } else if (inputPassword.value.length < 6) {

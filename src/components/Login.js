@@ -1,7 +1,8 @@
+/* eslint-disable import/no-cycle */
 // eslint-disable-next-line import/no-cycle
-import { accesUser, accesGoogle, accesFacebook } from '../auth.js';
+import { accesUser, accesGoogle } from '../lib/auth.js';
 // eslint-disable-next-line import/no-cycle
-import { onNavigate } from '../main.js';
+import { onNavigate } from '../Router.js';
 
 export const Login = () => {
   const divLogin = document.createElement('section');
@@ -69,29 +70,24 @@ export const Login = () => {
   const icoGoogle = document.createElement('i');
   icoGoogle.className = 'icon-google';
   icoGoogle.addEventListener('click', () => (accesGoogle()));
-  // icono de fb
-  const icoFb = document.createElement('i');
-  icoFb.className = 'icon-fb';
   divIcon.appendChild(icoGoogle);
-  divIcon.appendChild(icoFb);
-  icoFb.addEventListener('click', () => (accesFacebook()));
 
   const divCardFooter = document.createElement('div');
   divCardFooter.className = 'text-center';
   const buttonLogIn = document.createElement('button');
   buttonLogIn.className = 'button-form';
   buttonLogIn.innerText = 'Iniciar sesión';
+  buttonLogIn.id = 'btnLogin';
   // evento del boton Login
   buttonLogIn.addEventListener('click', () => (accesUser(inputUser.value, inputPassword.value)));
-  // condicionar el ingreso
-
-  // buttonLogIn.addEventListener('click', () => onNavigate('/feed'));
   const buttonSignUp = document.createElement('button');
   buttonSignUp.className = 'button-form';
+  buttonSignUp.id = 'buttonSignUp';
   buttonSignUp.innerText = 'Registrarse';
   // evento del boton sing up(registrarse)
   buttonSignUp.addEventListener('click', () => onNavigate('/register'));
   const linkLogin = document.createElement('a');
+  linkLogin.id = 'linkLogin';
   linkLogin.className = 'link-login';
   // linkLogin.href = '#';
   linkLogin.innerText = '¿Olvidaste tu contraseña?';

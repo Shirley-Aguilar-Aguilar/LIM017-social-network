@@ -1,6 +1,6 @@
-import f from '../lib/function.js';
-import { dataPublication } from '../cloudFirebase.js';
-import { publicationUser } from '../storage.js';
+import f from '../lib/functions.js';
+import { dataPublication } from '../lib/cloudFirebase.js';
+import { publicationUser } from '../lib/storage.js';
 
 export const publicationBeforeTemplate = () => {
   const feedTemplate2 = document.createElement('main');
@@ -24,16 +24,19 @@ export const publicationBeforeTemplate = () => {
   const inputTitle = document.createElement('div');
   inputTitle.contentEditable = true;
   inputTitle.className = 'div-title';
+  inputTitle.id = 'divTitle';
   inputTitle.setAttribute('placeholder', 'título de publicación');
 
   // div editable
   const divText = document.createElement('div');
   divText.contentEditable = true;
   divText.className = 'div-text';
+  divText.id = 'divText';
   divText.setAttribute('placeholder', 'Escriba su texto aqui');
   // agregando mensaje para evitar publicaciones vacias
   const messageTitleText = document.createElement('p');
   messageTitleText.className = 'message-alert-title-text';
+  messageTitleText.id = 'messageTitleText';
   messageTitleText.innerText = 'No se puede publicar título o texto vacío.';
   messageTitleText.style.display = 'none';
   // logos de publicación
@@ -41,21 +44,25 @@ export const publicationBeforeTemplate = () => {
   containerLogosButton.className = 'container-logos-button';
   const imgShareImage = document.createElement('img');
   imgShareImage.className = 'share-image-logo logo-smile-image';
+  imgShareImage.id = 'shareImage';
   imgShareImage.src = 'img/icomon/images.jpg';
   imgShareImage.alt = 'logo para agregar imagenes a la publicación';
 
   const imgShareStickers = document.createElement('img');
   imgShareStickers.className = 'share-stickers-logo logo-smile-image';
   imgShareStickers.src = 'img/icomon/smile.jpg';
+  imgShareStickers.id = 'buttonEmoticon';
   imgShareStickers.alt = 'logo para agregar stickers a la publicación';
   const buttonPublication = document.createElement('button');
   buttonPublication.className = 'button-publication';
+  buttonPublication.id = 'buttonPublication';
   buttonPublication.innerText = 'Publicar';
 
   // div oculto para subir foto
   const divUploader = document.createElement('div');
   divUploader.style.display = 'none';
   divUploader.className = 'div-uploader';
+  divUploader.id = 'divUploader';
 
   const divPreview = document.createElement('div');
   divPreview.className = 'div-preview';
@@ -70,6 +77,7 @@ export const publicationBeforeTemplate = () => {
   const divChangeLogoDisplay = document.createElement('div');
   divChangeLogoDisplay.style.display = 'none';
   divChangeLogoDisplay.className = 'div-display-change';
+  divChangeLogoDisplay.id = 'divChangeLogoDisplay';
   const divChangeLogo = document.createElement('div');
   divChangeLogo.className = 'div-logo-change-image-publication';
   const imageLogo = document.createElement('img');
@@ -80,6 +88,7 @@ export const publicationBeforeTemplate = () => {
   // div para emoticos
   const divEmoticons = document.createElement('div');
   divEmoticons.className = 'div-emoticons';
+  divEmoticons.id = 'divEmoticons';
   divEmoticons.style.display = 'none';
   // eslint-disable-next-line no-plusplus
   for (let index = 1; index < 82; index++) {
@@ -87,6 +96,7 @@ export const publicationBeforeTemplate = () => {
     const emojiIco = document.createElement('img');
     emojiIco.className = 'emoticons';
     emojiIco.src = emoji;
+    emojiIco.id = 'emojiIco';
     emojiIco.addEventListener('click', () => {
       divText.focus();
       f.pasteHtmlAtCaret(`<img class="emoticon" src="${emoji}">`);
@@ -116,23 +126,27 @@ export const publicationBeforeTemplate = () => {
   buttonPublication.addEventListener('click', () => {
     const title = inputTitle.innerHTML;
     const text = divText.innerHTML;
-    const date = f.timeNow();
+    const date = new Date();
     const uid = sessionStorage.getItem('uid');
+    let result = '';
     if ((title === '') || (text === '')) {
       messageTitleText.style.display = 'block';
+      result = false;
     } else {
       dataPublication(uid, title, text, date);
       inputTitle.innerHTML = '';
       divText.innerHTML = '';
       divEmoticons.style.display = 'none';
+      result = true;
     }
+    return result;
   });
 
   // evento para mostrar div de emoticons
   imgShareStickers.addEventListener('click', () => {
     if (divEmoticons.style.display === 'none') {
-      divEmoticons.style.display = 'grid';
       divUploader.style.display = 'none';
+      divEmoticons.style.display = 'grid';
     } else {
       divEmoticons.style.display = 'none';
     }
