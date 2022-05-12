@@ -15,7 +15,7 @@
      width: 100vw;
      overflow: scroll;
  }
- .full-page{
+ .full-page {
      background: url(../img/diseno-fondo.webp) no-repeat center center;
      background-size: cover;
      display: block;
@@ -25,7 +25,7 @@
      top: 0;
      left: 0;
  }
- .container{
+ .container {
      padding-right:15px;
      padding-left:15px;
      margin-right:auto;
@@ -137,9 +137,9 @@
       font-weight: 400;
   }
   *:focus { /* Selecciona cualquier <input> cuando se enfoca */
-      outline:0;
+      outline:0; /* es una forma reducida para establecer una o más de las propiedades individuales */
   }
-  .link-login{
+  .link-login {
       display:block;
       margin-top: 10px;
       cursor: pointer;

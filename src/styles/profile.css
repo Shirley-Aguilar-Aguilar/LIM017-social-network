@@ -1,5 +1,5 @@
 /*style de la publicación presentada en el muro---en proceso de creación*/
-.container-coverPage-profilePhoto{
+.container-coverPage-profilePhoto {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -35,7 +35,7 @@
     box-shadow: 7px 5px 3px black;
 }
 
-.name-usuario{
+.name-usuario {
     color: #FFF;
     font-size: 25px;
     font-weight: bold;
@@ -111,7 +111,7 @@
     background-color: white;
 
 }
-*{
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;

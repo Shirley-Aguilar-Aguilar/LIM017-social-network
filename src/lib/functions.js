@@ -10,8 +10,9 @@ const f = {
   },
   // función que permite agregar emoji en cualquier parte del texto
   pasteHtmlAtCaret(html) {
-    let range;
-    if (window.getSelection) {
+    let range; // Devuelve un objeto de selección representando el rango del texto seleccionado
+    // Devuelve un objeto de rango representando uno de los rangos seleccionados.
+    if (window.getSelection) { // CONSIDERAR SI ES NECESARIO------ELIMINAR-----------------
       const sel = window.getSelection();
       if (sel.getRangeAt && sel.rangeCount) {
         range = sel.getRangeAt(0);
